@@ -56,6 +56,7 @@ func NewServeMux(ctx context.Context, conn *grpc.ClientConn, handlers ...func(ct
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, marshaler),
 		runtime.WithOutgoingHeaderMatcher(outgoingHeaderMatcher),
 		runtime.WithForwardResponseOption(addGCPHeaders),
+		runtime.WithUnescapingMode(runtime.UnescapingModeAllExceptReserved),
 	)
 
 	for _, handler := range handlers {
