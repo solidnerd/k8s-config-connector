@@ -157,6 +157,16 @@ spec:
                 required:
                 - kmsKeyRef
                 type: object
+              hierarchicalNamespace:
+                description: The bucket's hierarchical namespace configuration.
+                properties:
+                  enabled:
+                    description: When set to true, hierarchical namespace is enabled
+                      for this bucket.
+                    type: boolean
+                required:
+                - enabled
+                type: object
               lifecycleRule:
                 description: The bucket's Lifecycle Rules configuration.
                 items:

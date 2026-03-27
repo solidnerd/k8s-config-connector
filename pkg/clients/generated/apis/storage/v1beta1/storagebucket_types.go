@@ -126,6 +126,11 @@ type BucketEncryption struct {
 	KmsKeyRef v1alpha1.ResourceRef `json:"kmsKeyRef"`
 }
 
+type BucketHierarchicalNamespace struct {
+	/* When set to true, hierarchical namespace is enabled for this bucket. */
+	Enabled bool `json:"enabled"`
+}
+
 type BucketLifecycleRule struct {
 	/* The Lifecycle Rule's action configuration. A single block of this type is supported. */
 	Action BucketAction `json:"action"`
@@ -198,6 +203,10 @@ type StorageBucketSpec struct {
 	/* The bucket's encryption configuration. */
 	// +optional
 	Encryption *BucketEncryption `json:"encryption,omitempty"`
+
+	/* The bucket's hierarchical namespace configuration. */
+	// +optional
+	HierarchicalNamespace *BucketHierarchicalNamespace `json:"hierarchicalNamespace,omitempty"`
 
 	/* The bucket's Lifecycle Rules configuration. */
 	// +optional

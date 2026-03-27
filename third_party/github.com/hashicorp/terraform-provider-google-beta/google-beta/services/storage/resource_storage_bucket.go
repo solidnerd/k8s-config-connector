@@ -436,6 +436,21 @@ func ResourceStorageBucket() *schema.Resource {
 				Computed:    true,
 				Description: `Prevents public access to a bucket.`,
 			},
+			"hierarchical_namespace": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: `When set to true, hierarchical namespace is enabled for this bucket.`,
+						},
+					},
+				},
+				Description: `The bucket's hierarchical namespace configuration.`,
+			},
 			"soft_delete_policy": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -536,6 +551,10 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 
 	if v, ok := d.GetOk("autoclass"); ok {
 		sb.Autoclass = expandBucketAutoclass(v)
+	}
+
+	if v, ok := d.GetOk("hierarchical_namespace"); ok {
+		sb.HierarchicalNamespace = expandBucketHierarchicalNamespace(v)
 	}
 
 	if v, ok := d.GetOk("website"); ok {
@@ -675,6 +694,12 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 	if d.HasChange("autoclass") {
 		if v, ok := d.GetOk("autoclass"); ok {
 			sb.Autoclass = expandBucketAutoclass(v)
+		}
+	}
+
+	if d.HasChange("hierarchical_namespace") {
+		if v, ok := d.GetOk("hierarchical_namespace"); ok {
+			sb.HierarchicalNamespace = expandBucketHierarchicalNamespace(v)
 		}
 	}
 
@@ -1199,6 +1224,35 @@ func flattenBucketAutoclass(bucketAutoclass *storage.BucketAutoclass) []map[stri
 	return autoclassList
 }
 
+func expandBucketHierarchicalNamespace(configured interface{}) *storage.BucketHierarchicalNamespace {
+	hierarchicalNamespaceList := configured.([]interface{})
+	if len(hierarchicalNamespaceList) == 0 {
+		return nil
+	}
+
+	hierarchicalNamespace := hierarchicalNamespaceList[0].(map[string]interface{})
+
+	bucketHierarchicalNamespace := &storage.BucketHierarchicalNamespace{}
+	bucketHierarchicalNamespace.Enabled = hierarchicalNamespace["enabled"].(bool)
+	bucketHierarchicalNamespace.ForceSendFields = append(bucketHierarchicalNamespace.ForceSendFields, "Enabled")
+
+	return bucketHierarchicalNamespace
+}
+
+func flattenBucketHierarchicalNamespace(bucketHierarchicalNamespace *storage.BucketHierarchicalNamespace) []map[string]interface{} {
+	hierarchicalNamespaceList := make([]map[string]interface{}, 0, 1)
+
+	if bucketHierarchicalNamespace == nil {
+		return hierarchicalNamespaceList
+	}
+
+	hierarchicalNamespace := map[string]interface{}{
+		"enabled": bucketHierarchicalNamespace.Enabled,
+	}
+	hierarchicalNamespaceList = append(hierarchicalNamespaceList, hierarchicalNamespace)
+	return hierarchicalNamespaceList
+}
+
 func flattenBucketLifecycle(lifecycle *storage.BucketLifecycle) []map[string]interface{} {
 	if lifecycle == nil || lifecycle.Rule == nil {
 		return []map[string]interface{}{}
@@ -1647,6 +1701,9 @@ func setStorageBucket(d *schema.ResourceData, config *transport_tpg.Config, res 
 	}
 	if err := d.Set("autoclass", flattenBucketAutoclass(res.Autoclass)); err != nil {
 		return fmt.Errorf("Error setting autoclass: %s", err)
+	}
+	if err := d.Set("hierarchical_namespace", flattenBucketHierarchicalNamespace(res.HierarchicalNamespace)); err != nil {
+		return fmt.Errorf("Error setting hierarchical_namespace: %s", err)
 	}
 	if err := d.Set("lifecycle_rule", flattenBucketLifecycle(res.Lifecycle)); err != nil {
 		return fmt.Errorf("Error setting lifecycle_rule: %s", err)
